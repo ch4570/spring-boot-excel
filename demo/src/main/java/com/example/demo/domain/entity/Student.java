@@ -21,7 +21,7 @@ public class Student {
 
 
     // Student Entity를 StudentDto로 변경해 반환하는 메서드
-    public StudentDto toEntity() {
+    public StudentDto toDto() {
         return new StudentDto(id, name);
     }
 }

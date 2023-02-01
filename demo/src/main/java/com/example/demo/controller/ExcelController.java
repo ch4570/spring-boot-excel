@@ -46,7 +46,7 @@ public class ExcelController {
 
         // 학생 EntityList를 DtoList로 변환
         List<StudentDto> studentDtoList = studentList.stream()
-                        .map(s -> s.toEntity())
+                        .map(s -> s.toDto())
                         .collect(Collectors.toList());
 
         // 엑셀 다운로드 로직 실행

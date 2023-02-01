@@ -34,7 +34,7 @@ public class DBInit {
 
         // 찾은 학생을 DTO로 변환 후 log로 출력
         for(Student s : list) {
-            StudentDto dto = s.toEntity();
+            StudentDto dto = s.toDto();
             log.info("찾은 학생 = {}", dto);
         }
     }
