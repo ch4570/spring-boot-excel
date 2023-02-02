@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 public class ExcelController {
 
     private final StudentService studentService;
+    private final ExcelUtils excelUtils;
 
 
     /*
@@ -49,6 +50,6 @@ public class ExcelController {
                         .collect(Collectors.toList());
 
         // 엑셀 다운로드 로직 실행
-        ExcelUtils.excelDownload(studentDtoList, response);
+        excelUtils.studentExcelDownload(studentDtoList, response);
     }
 }

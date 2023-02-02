@@ -8,6 +8,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import javax.servlet.http.HttpServletResponse;
@@ -17,16 +18,18 @@ import java.util.LinkedList;
 import java.util.List;
 
 @Slf4j
-public class ExcelUtils {
+@Component
+public class ExcelUtils implements ExcelUtilMethodFactory {
 
     /*
-    *  엑셀 다운로드 수행 로직
-    *   @param List<?>
+    *   학생 엑셀 다운로드 수행 로직
+    *   @param List<StudentDto>
     *   @param HttpServletResponse
     *   @throws IOException
     *   @throws RuntimeException
     * */
-    public static void excelDownload(List<?> data, HttpServletResponse response) {
+    @Override
+    public void studentExcelDownload(List<StudentDto> data, HttpServletResponse response) {
         // 엑셀파일(Workbook) 객체 생성
         Workbook wb =  new XSSFWorkbook();
 
@@ -60,7 +63,7 @@ public class ExcelUtils {
 
         // Body
         // 헤더 밑의 엑셀 파일 내용부분에 들어갈 내용을 그리는 작업
-        renderExcelBody(data, sheet, row, cell);
+        renderStudentExcelBody(data, sheet, row, cell);
 
         // DownLoad
         // 엑셀 파일이 완성 되면 파일 다운로드를 위해 content-type과 Header를 설정해준다.
@@ -90,11 +93,38 @@ public class ExcelUtils {
     }
 
     /*
+     *   엑셀의 본문에 내용을 그려주는 로직
+     *   @param List<StudentDto>
+     *   @param Sheet
+     *   @param Row
+     *   @param Cell
+     * */
+    @Override
+    public void renderStudentExcelBody(List<StudentDto> data, Sheet sheet, Row row, Cell cell) {
+        // 조회해온 데이터 리스트(List<StudentDto>)의 크기만큼 반복문을 실행한다.
+        for(int i=0; i<data.size(); i++) {
+
+            // 헤더를 설정할때 0번 인덱스가 사용 되었으므로, i값에 1을 더해서 1번 로우(행)부터 생성한다.
+            row = sheet.createRow(i+1);
+
+            // TODO : 하드코딩 대신 추후 동적으로 처리 할 수 있도록 개선 예정
+            // 첫 번째 cell(열)을 생성한다.
+            cell = row.createCell(0);
+            // 첫 번째 cell(열)의 값을 셋팅한다.
+            cell.setCellValue(data.get(i).getBan());
+            // 두 번째 cell(열)을 생성한다.
+            cell = row.createCell(1);
+            // 두 번째 cell(열)의 값을 셋팅한다.
+            cell.setCellValue(data.get(i).getName());
+        }
+    }
+
+    /*
      *   엑셀 헤더 이름들을 반환해주는 로직
      *   @param Class<?>
      *   @throws IllegalStateException
      * */
-    private static List<String> getHeaderName(Class<?> type) {
+    private List<String> getHeaderName(Class<?> type) {
 
         // 엑셀 헤더 이름들을 담아줄 List 생성
         List<String> excelHeaderNameList = new LinkedList<>();
@@ -121,47 +151,20 @@ public class ExcelUtils {
         return excelHeaderNameList;
     }
 
-    /*
-     *   엑셀의 본문에 내용을 그려주는 로직
-     *   @param List<?>
-     *   @param Sheet
-     *   @param Row
-     *   @param Cell
-     * */
-    private static void renderExcelBody(List<?> data, Sheet sheet, Row row, Cell cell) {
-
-        // 조회해온 데이터 리스트(List<?>)의 크기만큼 반복문을 실행한다.
-        for(int i=0; i<data.size(); i++) {
-
-            // 헤더를 설정할때 0번 인덱스가 사용 되었으므로, i값에 1을 더해서 1번 로우(행)부터 생성한다.
-            row = sheet.createRow(i+1);
-
-            // TODO : 하드코딩 대신 추후 동적으로 처리 할 수 있도록 개선 예정
-            // 첫 번째 cell(열)을 생성한다.
-            cell = row.createCell(0);
-            // 첫 번째 cell(열)의 값을 셋팅한다.
-            cell.setCellValue(((StudentDto)data.get(i)).getBan());
-            // 두 번째 cell(열)을 생성한다.
-            cell = row.createCell(1);
-            // 두 번째 cell(열)의 값을 셋팅한다.
-            cell.setCellValue(((StudentDto)data.get(i)).getName());
-        }
-
-    }
 
     /*
     *   List(데이터 리스트)에 담긴 DTO의 클래스 정보를 반환하는 메서드
     *   @param List<?>
     *   @return Class<?>
     * */
-    private static Class<?> getClass(List<?> data) {
+    private Class<?> getClass(List<?> data) {
         // List가 비어있지 않다면 List가 가지고 있는 모든 DTO는 같은 필드를 가지고 있으므로,
         // 맨 마지막 DTO만 빼서 클래스 정보를 반환한다.
         if(!CollectionUtils.isEmpty(data)) {
             return data.get(data.size()-1).getClass();
         } else {
-            log.error("조회된 학생 리스트가 없어서 예외 발생!");
-            throw new IllegalStateException("조회된 학생 리스트가 없습니다. 확인 후 다시 진행해주시기 바랍니다.");
+            log.error("리스트가 비어 있어서 예외 발생!");
+            throw new IllegalStateException("조회된 리스트가 비어 있습니다. 확인 후 다시 진행해주시기 바랍니다.");
         }
     }
 
