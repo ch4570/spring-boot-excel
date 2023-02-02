@@ -112,6 +112,7 @@ public class ExcelUtils {
 
         // 헤더의 이름을 담은 List가 비어있을 경우, 헤더 이름이 지정되지 않은 것이므로, 예외를 발생시킨다.
         if(CollectionUtils.isEmpty(excelHeaderNameList)) {
+            log.error("헤더 이름이 조회되지 않아 예외 발생!");
             throw new IllegalStateException("헤더 이름이 없습니다.");
         }
 
@@ -152,9 +153,14 @@ public class ExcelUtils {
     *   @return Class<?>
     * */
     private static Class<?> getClass(List<?> data) {
-        // List가 가지고 있는 모든 DTO는 같은 필드를 가지고 있으므로,
+        // List가 비어있지 않다면 List가 가지고 있는 모든 DTO는 같은 필드를 가지고 있으므로,
         // 맨 마지막 DTO만 빼서 클래스 정보를 반환한다.
-        return data.get(data.size()-1).getClass();
+        if(!CollectionUtils.isEmpty(data)) {
+            return data.get(data.size()-1).getClass();
+        } else {
+            log.error("조회된 학생 리스트가 없어서 예외 발생!");
+            throw new IllegalStateException("조회된 학생 리스트가 없습니다. 확인 후 다시 진행해주시기 바랍니다.");
+        }
     }
 
 }

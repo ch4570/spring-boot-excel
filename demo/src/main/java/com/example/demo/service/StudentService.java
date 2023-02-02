@@ -39,10 +39,23 @@ public class StudentService {
 
         // 학생 전체 조회 후 리스트가 비어있다면, 예외를 던진다.
         if(CollectionUtils.isEmpty(studentList)) {
+            log.error("조회된 학생이 없어서 예외 발생!");
             throw new IllegalStateException("조회된 학생 데이터가 없습니다. 확인 후 다시 진행해주시기 바랍니다.");
         }
 
         return studentRepository.findAll();
     }
+
+
+
+
+
+
+
+
+
+
+
+
 
 }
