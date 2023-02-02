@@ -1,6 +1,5 @@
 package com.example.demo.domain.entity;
 
-import com.example.demo.annotation.ExcelColumn;
 import com.example.demo.domain.dto.StudentDto;
 import lombok.*;
 

@@ -43,19 +43,7 @@ public class StudentService {
             throw new IllegalStateException("조회된 학생 데이터가 없습니다. 확인 후 다시 진행해주시기 바랍니다.");
         }
 
-        return studentRepository.findAll();
+        return studentList;
     }
-
-
-
-
-
-
-
-
-
-
-
-
 
 }
