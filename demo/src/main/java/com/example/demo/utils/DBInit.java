@@ -37,8 +37,9 @@ public class DBInit {
         insertDummyStudent();
         insertDummyClerk();
 
-        // 학생 리스트를 조회
+        // 학생 & 사원 리스트를 조회
         List<Student> list = studentService.findAllStudent();
+        List<Clerk> clerkList = clerkService.findAllClerk();
 
         // 찾은 학생을 DTO로 변환 후 log로 출력
         for(Student s : list) {
@@ -47,7 +48,6 @@ public class DBInit {
         }
 
         // 찾은 사원을 DTO로 변환 후 log로 출력
-        List<Clerk> clerkList = clerkService.findAllClerk();
         for(Clerk c : clerkList) {
             ClerkDto clerkDto = c.toDto();
             log.info("찾은 사원 = {}", clerkDto);

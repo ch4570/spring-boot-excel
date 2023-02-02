@@ -74,9 +74,20 @@ public class ExcelController {
     }
 
 
+    /*
+     *   모드별 엑셀 읽기 로직
+     *   @param String - mode
+     *   @param MultipartFile
+     *   @param HttpServletResponse
+     *   @throws IOException
+     *   @throws RuntimeException
+     * */
     private void readExcel(String mode, MultipartFile excelFile, Model model) {
+        // 매개변수로 들어오는 mode의 값에 따라서 다른 로직이 수행된다.
         switch (mode) {
+            // mode가 "student"라면 학생 엑셀을 읽는 로직이 수행된다.
             case "student" :
+                // 파일로 넘어온 학생 엑셀파일을 읽어서 List로 반환받는다.
                 List<StudentDto> studentExcel = excelUtils.readStudentExcel(excelFile);
                 model.addAttribute("studentExcel", studentExcel);
 
@@ -85,7 +96,9 @@ public class ExcelController {
                 }
                 break;
 
+            // mode가 "clerk"라면 사원 엑셀을 읽는 로직이 수행된다.
             case "clerk" :
+                // 파일로 넘어온 사원 엑셀파일을 읽어서 List로 반환받는다.
                 List<ClerkDto> clerkExcel = excelUtils.readClerkExcel(excelFile);
                 model.addAttribute("clerkExcel", clerkExcel);
 
@@ -99,12 +112,14 @@ public class ExcelController {
     /*
     *   모드별 엑셀 다운로드 로직
     *   @param String - mode
-    *   @HttpServletResponse
+    *   @param HttpServletResponse
     *   @throws IOException
     *   @throws RuntimeException
     * */
     private void downLoadExcel(String mode, HttpServletResponse response) {
+        // 매개변수로 들어오는 mode의 값에 따라서 다른 로직이 수행된다.
         switch (mode) {
+            // mode가 "student"라면 학생 데이터를 엑셀로 다운로드
             case "student" :
                 log.info("학생 엑셀 다운로드 요청 도착!!");
 
@@ -116,10 +131,11 @@ public class ExcelController {
                         .map(s -> s.toDto())
                         .collect(Collectors.toList());
 
-                // 엑셀 다운로드 로직 실행
+                // 학생 엑셀 다운로드 로직 실행
                 excelUtils.studentExcelDownload(studentDtoList, response);
                 break;
 
+            // mode가 "clerk"라면 사원 데이터를 엑셀로 다운로드
             case "clerk" :
                 log.info("사원 엑셀 다운로드 요청 도착!!");
 
@@ -131,7 +147,7 @@ public class ExcelController {
                         .map(s -> s.toDto())
                         .collect(Collectors.toList());
 
-                // 엑셀 다운로드 로직 실행
+                // 사원 엑셀 다운로드 로직 실행
                 excelUtils.clerkExcelDownload(clerkDtoList, response);
                 break;
         }
