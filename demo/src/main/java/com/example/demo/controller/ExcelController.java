@@ -1,7 +1,10 @@
 package com.example.demo.controller;
 
+import com.example.demo.domain.dto.ClerkDto;
 import com.example.demo.domain.dto.StudentDto;
+import com.example.demo.domain.entity.Clerk;
 import com.example.demo.domain.entity.Student;
+import com.example.demo.service.ClerkService;
 import com.example.demo.service.StudentService;
 import com.example.demo.utils.ExcelUtils;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +26,7 @@ public class ExcelController {
 
     private final StudentService studentService;
     private final ExcelUtils excelUtils;
+    private final ClerkService clerkService;
 
 
     /*
@@ -41,19 +45,9 @@ public class ExcelController {
     *   @throws RuntimeException
     * */
     @GetMapping("/excel/download")
-    public void excelDownLoad(HttpServletResponse response) {
-        log.info("/excel/download 요청 도착!!");
-
-        // 엑셀로 출력할 학생 리스트 조회
-        List<Student> studentList = studentService.findAllStudent();
-
-        // 학생 EntityList를 DtoList로 변환
-        List<StudentDto> studentDtoList = studentList.stream()
-                        .map(s -> s.toDto())
-                        .collect(Collectors.toList());
-
-        // 엑셀 다운로드 로직 실행
-        excelUtils.studentExcelDownload(studentDtoList, response);
+    public void excelDownLoad(HttpServletResponse response, String mode) {
+        // 엑셀 다운로직 실행(Mode에 따라 수행되는 로직 변경되어 메서드 분리)
+        downLoadExcel(mode, response);
     }
 
     /*
@@ -74,14 +68,72 @@ public class ExcelController {
     *   @throws RuntimeException
     * */
     @PostMapping("/excel/read")
-    public void excelRead(Model model, MultipartFile excelFile) {
-        List<StudentDto> studentExcel = excelUtils.readStudentExcel(excelFile);
-        model.addAttribute("studentExcel", studentExcel);
+    public void excelRead(String mode, Model model, MultipartFile excelFile) {
+        // mode에 따라 엑셀 파일 읽기 메서드 실행
+        readExcel(mode, excelFile, model);
+    }
 
-        for(StudentDto s : studentExcel) {
-            log.info("학생 출력 = {}", s);
+
+    private void readExcel(String mode, MultipartFile excelFile, Model model) {
+        switch (mode) {
+            case "student" :
+                List<StudentDto> studentExcel = excelUtils.readStudentExcel(excelFile);
+                model.addAttribute("studentExcel", studentExcel);
+
+                for(StudentDto s : studentExcel) {
+                    log.info("학생 출력 = {}", s);
+                }
+                break;
+
+            case "clerk" :
+                List<ClerkDto> clerkExcel = excelUtils.readClerkExcel(excelFile);
+                model.addAttribute("clerkExcel", clerkExcel);
+
+                for(ClerkDto c : clerkExcel) {
+                    log.info("사원 출력 = {}", c);
+                }
         }
     }
 
 
+    /*
+    *   모드별 엑셀 다운로드 로직
+    *   @param String - mode
+    *   @HttpServletResponse
+    *   @throws IOException
+    *   @throws RuntimeException
+    * */
+    private void downLoadExcel(String mode, HttpServletResponse response) {
+        switch (mode) {
+            case "student" :
+                log.info("학생 엑셀 다운로드 요청 도착!!");
+
+                // 엑셀로 출력할 학생 리스트 조회
+                List<Student> studentList = studentService.findAllStudent();
+
+                // 학생 EntityList를 DtoList로 변환
+                List<StudentDto> studentDtoList = studentList.stream()
+                        .map(s -> s.toDto())
+                        .collect(Collectors.toList());
+
+                // 엑셀 다운로드 로직 실행
+                excelUtils.studentExcelDownload(studentDtoList, response);
+                break;
+
+            case "clerk" :
+                log.info("사원 엑셀 다운로드 요청 도착!!");
+
+                // 엑셀로 출력할 학생 리스트 조회
+                List<Clerk> clerkList = clerkService.findAllClerk();
+
+                // 학생 EntityList를 DtoList로 변환
+                List<ClerkDto> clerkDtoList = clerkList.stream()
+                        .map(s -> s.toDto())
+                        .collect(Collectors.toList());
+
+                // 엑셀 다운로드 로직 실행
+                excelUtils.clerkExcelDownload(clerkDtoList, response);
+                break;
+        }
+    }
 }

@@ -1,6 +1,7 @@
 package com.example.demo.utils;
 
 import com.example.demo.annotation.ExcelColumn;
+import com.example.demo.domain.dto.ClerkDto;
 import com.example.demo.domain.dto.StudentDto;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
@@ -35,9 +36,9 @@ public class ExcelUtils implements ExcelUtilMethodFactory {
     @Override
     public void studentExcelDownload(List<StudentDto> data, HttpServletResponse response) {
         // 엑셀파일(Workbook) 객체 생성
-        Workbook workbook =  new XSSFWorkbook();
+        Workbook workbook =  getXSSFWorkBook();
 
-        // 엑셀파일 sheet를 만들고, 생성자에 이름을 지정해 줄 수 있다.
+        // 엑셀파일 sheet를 만들고, sheet의 이름을 지정해 줄 수 있다.
         Sheet sheet = workbook.createSheet("첫 번째 시트");
 
         // 엑셀의 열에 해당하는 Cell 객체 생성
@@ -132,7 +133,7 @@ public class ExcelUtils implements ExcelUtilMethodFactory {
         List<StudentDto> studentDtoList = new ArrayList<>();
 
         // 파일의 확장자만 바꿔서 올리는 FakeFile을 방지하기 위해 Apache Tika 사용
-        Tika tika = new Tika();
+        Tika tika = getTika();
 
         // try ~ catch ~ finally 블럭에서 사용하기 위해 Workbook 초기화
         Workbook workbook = null;
@@ -185,6 +186,178 @@ public class ExcelUtils implements ExcelUtilMethodFactory {
 
 
         return studentDtoList;
+    }
+
+    /*
+     *   사원 엑셀 다운로드 수행 로직
+     *   @param List<ClerkDto>
+     *   @param HttpServletResponse
+     *   @throws IOException
+     *   @throws RuntimeException
+     * */
+    @Override
+    public void clerkExcelDownload(List<ClerkDto> data, HttpServletResponse response) {
+        // 엑셀파일(Workbook) 객체 생성
+        Workbook workbook =  getXSSFWorkBook();
+
+        // 엑셀파일 sheet를 만들고, sheet의 이름을 지정해 줄 수 있다.
+        Sheet sheet = workbook.createSheet("첫 번째 시트");
+
+        // 엑셀의 열에 해당하는 Cell 객체 생성
+        Cell cell = null;
+
+        // 엑셀의 행에 해당하는 Row 객체 생성
+        Row row = null;
+
+        // List가 아닌 DTO를 넘겨줘야 하므로 메서드를 통해 DTO의 class 정보가 담긴 class 객체를 넣어준다.
+        // Header의 내용을 List로 반환 받는다(엑셀의 Cell의 첫줄이 된다.)
+        List<String> excelHeaderList = getHeaderName(getClass(data));
+
+        // Header - 열의 첫줄(컬럼 이름들)을 그리는 작업
+
+        // 첫 행을 생성해준다.
+        row = sheet.createRow(0);
+
+        // 헤더의 수(컬럼 이름의 수)만큼 반복해서 행을 생성한다.
+        for(int i=0; i<excelHeaderList.size(); i++) {
+
+            // 열을 만들어준다.
+            cell = row.createCell(i);
+
+            // 열에 헤더이름(컬럼 이름)을 넣어준다.
+            cell.setCellValue(excelHeaderList.get(i));
+        }
+
+        // Body
+        // 헤더 밑의 엑셀 파일 내용부분에 들어갈 내용을 그리는 작업
+        renderClerkExcelBody(data, sheet, row, cell);
+
+        // DownLoad
+        // 엑셀 파일이 완성 되면 파일 다운로드를 위해 content-type과 Header를 설정해준다.
+        // filename=파일이름.xlsx 가 파일의 이름이 된다.
+        response.setContentType("ms-vnd/excel");
+        response.setHeader("Content-Disposition", "attachment;filename=clerk.xlsx");
+
+        try {
+            // 엑셀 파일을 다운로드 하기 위해 write() 메서드를 사용한다.
+            workbook.write(response.getOutputStream());
+        } catch (IOException e) {
+            // checked 예외를 사용하면 추후 의존이나 예외 누수 문제가 생길 수 있으므로
+            // RuntimeException으로 한번 감싸서, cause가 나올 수 있게 발생한 예외를 넣어준다.
+            log.error("Workbook write 수행 중 IOException 발생!");
+            throw new RuntimeException(e);
+        } finally {
+            // 파일 입출력 스트림을 사용한 후에는 예외 발생 여부와 관계없이 반드시 닫아 주어야 한다.
+            closeWorkBook(workbook);
+        }
+    }
+
+    /*
+     *   엑셀의 본문에 내용을 그려주는 로직
+     *   @param List<ClerkDto>
+     *   @param Sheet
+     *   @param Row
+     *   @param Cell
+     * */
+    @Override
+    public void renderClerkExcelBody(List<ClerkDto> data, Sheet sheet, Row row, Cell cell) {
+        // 현재 행의 개수를 가지고 있는 변수 rowCount 선언(Header를 그리고 시작했으므로 1부터 시작)
+        int rowCount = 1;
+
+        // 조회해온 데이터 리스트(List<ClerkDto>)의 크기만큼 반복문을 실행한다.
+        for(ClerkDto clerk : data) {
+
+            // 헤더를 설정할때 0번 인덱스가 사용 되었으므로, i값에 1을 더해서 1번 로우(행)부터 생성한다.
+            row = sheet.createRow(rowCount++);
+
+            // TODO : 하드코딩 대신 추후 동적으로 처리 할 수 있도록 개선 예정
+            // 첫 번째 cell(열)을 생성한다.
+            cell = row.createCell(0);
+            // 첫 번째 cell(열)의 값을 셋팅한다.
+            cell.setCellValue(clerk.getId());
+            // 두 번째 cell(열)을 생성한다.
+            cell = row.createCell(1);
+            // 두 번째 cell(열)의 값을 셋팅한다.
+            cell.setCellValue(clerk.getName());
+            // 세 번째 cell(열)을 생성한다.
+            cell = row.createCell(2);
+            // 세 번째 cell(열)의 값을 셋팅한다.
+            cell.setCellValue(clerk.getSalary());
+            // 네 번째 cell(열)을 생성한다.
+            cell = row.createCell(3);
+            // 네 번째 cell(열)의 값을 셋팅한다.
+            cell.setCellValue(clerk.getEmployDate());
+        }
+    }
+
+
+    /*
+     *  학생 엑셀을 읽어서 List로 반환해주는 로직
+     *  @param MulitpartFile
+     *  @return List<StudentDto>
+     *  @throws IOException
+     *  @throws IllegalStateException
+     * */
+    @Override
+    public List<ClerkDto> readClerkExcel(MultipartFile file) {
+        List<ClerkDto> clerkDtoList = new ArrayList<>();
+
+        // 파일의 확장자만 바꿔서 올리는 FakeFile을 방지하기 위해 Apache Tika 사용
+        Tika tika = getTika();
+
+        // try ~ catch ~ finally 블럭에서 사용하기 위해 Workbook 초기화
+        Workbook workbook = null;
+
+        try {
+            // Tika를 사용해서 MIME 타입을 얻어낸다
+            String mimeType = tika.detect(file.getBytes());
+            log.info("mimeType = {}", mimeType);
+
+
+            // 파일의 확장자 명을 구한다
+            // ex) Clerk.xlsx => return "xlsx"
+            String extension = FilenameUtils.getExtension(file.getOriginalFilename());
+            log.info("extension = {}", extension);
+
+            // 파일의 확장자명과 MIME 타입으로 엑셀파일이 맞는지 검증한다.
+            if(!isExcelPresent(mimeType, extension)) {
+                throw new IllegalStateException("엑셀 파일이 아닙니다. 확인 후 다시 업로드 해주세요.");
+            }
+
+            // 가져온 파일로 Workbook 객체를 생성
+            workbook = new XSSFWorkbook(file.getInputStream());
+
+            // 현재 시트를 첫번째 시트만 사용중이므로 0번 인덱스 시트를 가져온다.
+            Sheet sheet = workbook.getSheetAt(0);
+
+            // 헤더를 제외하고 데이터를 뽑아야 하므로, 1번 인덱스 부터 시작한다.
+            for(int i=1; i<sheet.getPhysicalNumberOfRows(); i++) {
+
+                // 시트로부터 행을 가져온다.
+                Row row = sheet.getRow(i);
+
+                // Cell들의 값을 얻어와서 StudentDto와 매핑해준다.
+                ClerkDto clerkDto = ClerkDto.builder()
+                        .id((long)row.getCell(0).getNumericCellValue())
+                        .name(row.getCell(1).getStringCellValue())
+                        .salary((int)row.getCell(2).getNumericCellValue())
+                        .employDate(row.getCell(3).getStringCellValue())
+                        .build();
+
+                // 반환할 studentDtoList에 추가한다.
+                clerkDtoList.add(clerkDto);
+            }
+        } catch (IOException e) {
+            // checked 예외를 사용하면 추후 의존이나 예외 누수 문제가 생길 수 있으므로
+            // RuntimeException으로 한번 감싸서, cause가 나올 수 있게 발생한 예외를 넣어준다.
+            log.error("엑셀 파일을 읽는 도중 IOException 발생!");
+            throw new RuntimeException(e);
+        } finally {
+            closeWorkBook(workbook);
+        }
+
+
+        return clerkDtoList;
     }
 
     /*
@@ -266,6 +439,23 @@ public class ExcelUtils implements ExcelUtilMethodFactory {
             // RuntimeException으로 한번 감싸서, cause가 나올 수 있게 발생한 예외를 넣어준다.
             throw new RuntimeException(e);
         }
+    }
+
+    /*
+    *   XSSFWorkbook을 반환하는 로직
+    *   @return XSSFWorkbook
+    * */
+    private XSSFWorkbook getXSSFWorkBook() {
+        return new XSSFWorkbook();
+    }
+
+
+    /*
+    *   Tika를 반환하는 로직
+    *   @return Tika
+    * */
+    private Tika getTika() {
+        return new Tika();
     }
 
 }
