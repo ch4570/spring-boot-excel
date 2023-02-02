@@ -74,6 +74,7 @@ public class ExcelUtils {
         } catch (IOException e) {
             // checked 예외를 사용하면 추후 의존이나 예외 누수 문제가 생길 수 있으므로
             // RuntimeException으로 한번 감싸서, cause가 나올 수 있게 발생한 예외를 넣어준다.
+            log.error("Workbook write 수행 중 IOException 발생!");
             throw new RuntimeException(e);
         } finally {
             try {
@@ -82,6 +83,7 @@ public class ExcelUtils {
             } catch (IOException e) {
                 // checked 예외를 사용하면 추후 의존이나 예외 누수 문제가 생길 수 있으므로
                 // RuntimeException으로 한번 감싸서, cause가 나올 수 있게 발생한 예외를 넣어준다.
+                log.error("Workbook 출력 스트림 닫는 중 IOException 발생!");
                 throw new RuntimeException(e);
             }
         }
