@@ -5,13 +5,18 @@
     <title>Title</title>
 </head>
 <body>
-  <button id="download_excel">엑셀 다운</button>
+  <button id="student_download_excel">학생 엑셀 다운</button>
+  <button id="clerk_download_excel">사원 엑셀 다운</button>
 </body>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
   $(document).ready(function () {
-    $('#download_excel').on('click', function () {
-       location.href = '/excel/download';
+    $('#student_download_excel').on('click', function () {
+       location.href = '/excel/download?mode=student';
+    });
+
+    $('#clerk_download_excel').on('click', function () {
+       location.href = '/excel/download?mode=clerk';
     });
   });
 </script>

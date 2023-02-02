@@ -7,6 +7,11 @@
 <body>
   <form action="/excel/read" method="post" enctype="multipart/form-data">
     <input type="file" name="excelFile"/>
+      <select name="mode">
+          <option value="" selected>구분</option>
+          <option value="student">학생</option>
+          <option value="clerk">사원</option>
+      </select>
     <input type="submit" value="엑셀 파일 업로드"/>
   </form>
 </body>
