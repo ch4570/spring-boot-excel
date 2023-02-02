@@ -101,21 +101,24 @@ public class ExcelUtils implements ExcelUtilMethodFactory {
      * */
     @Override
     public void renderStudentExcelBody(List<StudentDto> data, Sheet sheet, Row row, Cell cell) {
+        // 현재 행의 개수를 가지고 있는 변수 rowCount 선언(Header를 그리고 시작했으므로 1부터 시작)
+        int rowCount = 1;
+
         // 조회해온 데이터 리스트(List<StudentDto>)의 크기만큼 반복문을 실행한다.
-        for(int i=0; i<data.size(); i++) {
+        for(StudentDto student : data) {
 
             // 헤더를 설정할때 0번 인덱스가 사용 되었으므로, i값에 1을 더해서 1번 로우(행)부터 생성한다.
-            row = sheet.createRow(i+1);
+            row = sheet.createRow(rowCount++);
 
             // TODO : 하드코딩 대신 추후 동적으로 처리 할 수 있도록 개선 예정
             // 첫 번째 cell(열)을 생성한다.
             cell = row.createCell(0);
             // 첫 번째 cell(열)의 값을 셋팅한다.
-            cell.setCellValue(data.get(i).getBan());
+            cell.setCellValue(student.getBan());
             // 두 번째 cell(열)을 생성한다.
             cell = row.createCell(1);
             // 두 번째 cell(열)의 값을 셋팅한다.
-            cell.setCellValue(data.get(i).getName());
+            cell.setCellValue(student.getName());
         }
     }
 
