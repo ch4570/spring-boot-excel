@@ -3,17 +3,21 @@ package com.example.demo.utils;
 import com.example.demo.annotation.ExcelColumn;
 import com.example.demo.domain.dto.StudentDto;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.tika.Tika;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -31,10 +35,10 @@ public class ExcelUtils implements ExcelUtilMethodFactory {
     @Override
     public void studentExcelDownload(List<StudentDto> data, HttpServletResponse response) {
         // 엑셀파일(Workbook) 객체 생성
-        Workbook wb =  new XSSFWorkbook();
+        Workbook workbook =  new XSSFWorkbook();
 
         // 엑셀파일 sheet를 만들고, 생성자에 이름을 지정해 줄 수 있다.
-        Sheet sheet = wb.createSheet("첫 번째 시트");
+        Sheet sheet = workbook.createSheet("첫 번째 시트");
 
         // 엑셀의 열에 해당하는 Cell 객체 생성
         Cell cell = null;
@@ -73,22 +77,15 @@ public class ExcelUtils implements ExcelUtilMethodFactory {
 
         try {
             // 엑셀 파일을 다운로드 하기 위해 write() 메서드를 사용한다.
-            wb.write(response.getOutputStream());
+            workbook.write(response.getOutputStream());
         } catch (IOException e) {
             // checked 예외를 사용하면 추후 의존이나 예외 누수 문제가 생길 수 있으므로
             // RuntimeException으로 한번 감싸서, cause가 나올 수 있게 발생한 예외를 넣어준다.
             log.error("Workbook write 수행 중 IOException 발생!");
             throw new RuntimeException(e);
         } finally {
-            try {
-                // 파일 입출력 스트림을 사용한 후에는 예외 발생 여부와 관계없이 반드시 닫아 주어야 한다.
-                wb.close();
-            } catch (IOException e) {
-                // checked 예외를 사용하면 추후 의존이나 예외 누수 문제가 생길 수 있으므로
-                // RuntimeException으로 한번 감싸서, cause가 나올 수 있게 발생한 예외를 넣어준다.
-                log.error("Workbook 출력 스트림 닫는 중 IOException 발생!");
-                throw new RuntimeException(e);
-            }
+            // 파일 입출력 스트림을 사용한 후에는 예외 발생 여부와 관계없이 반드시 닫아 주어야 한다.
+            closeWorkBook(workbook);
         }
     }
 
@@ -120,6 +117,74 @@ public class ExcelUtils implements ExcelUtilMethodFactory {
             // 두 번째 cell(열)의 값을 셋팅한다.
             cell.setCellValue(student.getName());
         }
+    }
+
+    /*
+    *  학생 엑셀을 읽어서 List로 반환해주는 로직
+    *  @param MulitpartFile
+    *  @return List<StudentDto>
+    *  @throws IOException
+    *  @throws IllegalStateException
+    * */
+    @Override
+    public List<StudentDto> readStudentExcel(MultipartFile file) {
+
+        List<StudentDto> studentDtoList = new ArrayList<>();
+
+        // 파일의 확장자만 바꿔서 올리는 FakeFile을 방지하기 위해 Apache Tika 사용
+        Tika tika = new Tika();
+
+        // try ~ catch ~ finally 블럭에서 사용하기 위해 Workbook 초기화
+        Workbook workbook = null;
+
+        try {
+            // Tika를 사용해서 MIME 타입을 얻어낸다
+            String mimeType = tika.detect(file.getBytes());
+            log.info("mimeType = {}", mimeType);
+
+
+            // 파일의 확장자 명을 구한다
+            // ex) Student.xlsx => return "xlsx"
+            String extension = FilenameUtils.getExtension(file.getOriginalFilename());
+            log.info("extension = {}", extension);
+
+            // 파일의 확장자명과 MIME 타입으로 엑셀파일이 맞는지 검증한다.
+            if(!isExcelPresent(mimeType, extension)) {
+                throw new IllegalStateException("엑셀 파일이 아닙니다. 확인 후 다시 업로드 해주세요.");
+            }
+
+            // 가져온 파일로 Workbook 객체를 생성
+            workbook = new XSSFWorkbook(file.getInputStream());
+
+            // 현재 시트를 첫번째 시트만 사용중이므로 0번 인덱스 시트를 가져온다.
+            Sheet sheet = workbook.getSheetAt(0);
+
+            // 헤더를 제외하고 데이터를 뽑아야 하므로, 1번 인덱스 부터 시작한다.
+            for(int i=1; i<sheet.getPhysicalNumberOfRows(); i++) {
+
+                // 시트로부터 행을 가져온다.
+                Row row = sheet.getRow(i);
+
+                // Cell들의 값을 얻어와서 StudentDto와 매핑해준다.
+                StudentDto studentDto = StudentDto.builder()
+                        .ban((long)row.getCell(0).getNumericCellValue())
+                        .name(row.getCell(1).getStringCellValue())
+                        .build();
+
+                // 반환할 studentDtoList에 추가한다.
+                studentDtoList.add(studentDto);
+            }
+        } catch (IOException e) {
+            // checked 예외를 사용하면 추후 의존이나 예외 누수 문제가 생길 수 있으므로
+            // RuntimeException으로 한번 감싸서, cause가 나올 수 있게 발생한 예외를 넣어준다.
+            log.error("엑셀 파일을 읽는 도중 IOException 발생!");
+            throw new RuntimeException(e);
+        } finally {
+           closeWorkBook(workbook);
+        }
+
+
+        return studentDtoList;
     }
 
     /*
@@ -168,6 +233,38 @@ public class ExcelUtils implements ExcelUtilMethodFactory {
         } else {
             log.error("리스트가 비어 있어서 예외 발생!");
             throw new IllegalStateException("조회된 리스트가 비어 있습니다. 확인 후 다시 진행해주시기 바랍니다.");
+        }
+    }
+
+
+    /*
+    *   엑셀 파일인지 체크
+    *   @param String mime
+    *   @param String extension
+    *   @return boolean
+    * */
+    private boolean isExcelPresent(String mime, String extension) {
+        // Microsoft Office 파일의 MIME는 application/x-tika-ooxml이다.
+        return mime.equals("application/x-tika-ooxml") &&
+                // 확장자는 xlsx이어야 한다.
+                extension.equals("xlsx");
+    }
+
+    /*
+    *  WorkBook의 스트림을 닫아주는 로직
+    *  @param Workbook
+    *  @throws RuntimeException
+    *  @throws IOException
+    * */
+    private void closeWorkBook(Workbook workbook) {
+        try {
+            if(workbook != null) {
+                workbook.close();
+            }
+        } catch (IOException e) {
+            // checked 예외를 사용하면 추후 의존이나 예외 누수 문제가 생길 수 있으므로
+            // RuntimeException으로 한번 감싸서, cause가 나올 수 있게 발생한 예외를 넣어준다.
+            throw new RuntimeException(e);
         }
     }
 

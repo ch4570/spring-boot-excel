@@ -7,7 +7,10 @@ import com.example.demo.utils.ExcelUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -28,7 +31,7 @@ public class ExcelController {
     * */
     @GetMapping("/excel/downloadForm")
     public String excelDownloadForm() {
-        return "excel";
+        return "excelDownloadForm";
     }
 
     /*
@@ -52,4 +55,33 @@ public class ExcelController {
         // 엑셀 다운로드 로직 실행
         excelUtils.studentExcelDownload(studentDtoList, response);
     }
+
+    /*
+    *  엑셀 읽기 FORM 출력
+    *  return String(View Name)
+    * */
+    @GetMapping("/excel/readForm")
+    public String excelReadForm() {
+        return "excelReadForm";
+    }
+
+    /*
+    *   엑셀 파일 읽기
+    *   @param Model
+    *   @param MultipartFile
+    *   @return String(View Name)
+    *   @throws IOException
+    *   @throws RuntimeException
+    * */
+    @PostMapping("/excel/read")
+    public void excelRead(Model model, MultipartFile excelFile) {
+        List<StudentDto> studentExcel = excelUtils.readStudentExcel(excelFile);
+        model.addAttribute("studentExcel", studentExcel);
+
+        for(StudentDto s : studentExcel) {
+            log.info("학생 출력 = {}", s);
+        }
+    }
+
+
 }
