@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<tr>
+    <td>반</td>
+    <td>이름</td>
+</tr><br>
+<form id="excel_form" action="/excel/compareDownload" method="get">
+<tr th:each="excel : ${compareExcel}">
+    <td th:text="${excel.id}"></td>
+    <td th:text="${excel.name}"></td><br>
+</tr>
+</form>
+<button id="excel_download">엑셀 다운</button>
+</body>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script th:inline="javascript">
+    $(document).ready(function () {
+       $('#excel_download').on('click', function () {
+           $('#excel_download').hide();
+           location.href = '/excel/compareDownload';
+       });
+    });
+</script>
+</html>
