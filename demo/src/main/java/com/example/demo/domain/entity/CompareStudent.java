@@ -6,22 +6,25 @@ import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.*;
 
-@Entity @Getter @Builder
+@Entity
+@Getter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @ToString
 @BatchSize(size = 1000)
-public class Student {
-    
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class CompareStudent {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "BAN")
     private Long id;
-    
+
     @Column(name = "NAME")
     private String name;
 
 
-    // Student Entity를 StudentDto로 변경해 반환하는 메서드
+    // CompareStudent Entity를 StudentDto로 변경해 반환하는 메서드
     public StudentDto toDto() {
         return new StudentDto(id, name);
     }

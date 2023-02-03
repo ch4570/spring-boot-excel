@@ -41,6 +41,8 @@ public class DBInit {
         List<Student> list = studentService.findAllStudent();
         List<Clerk> clerkList = clerkService.findAllClerk();
 
+
+
         // 찾은 학생을 DTO로 변환 후 log로 출력
         for(Student s : list) {
             StudentDto studentDto = s.toDto();
@@ -55,7 +57,7 @@ public class DBInit {
     }
 
     private void insertDummyStudent() {
-        for(int i=1; i<30; i++) {
+        for(int i=1; i<100000; i++) {
             studentService.saveStudent(Student.builder().name("학생"+i).build());
         }
     }
