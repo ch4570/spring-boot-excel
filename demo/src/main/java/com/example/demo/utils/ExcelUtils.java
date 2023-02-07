@@ -26,8 +26,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -374,21 +376,15 @@ public class ExcelUtils implements ExcelUtilMethodFactory {
      * */
     private List<String> getHeaderName(Class<?> type) {
 
-        // 엑셀 헤더 이름들을 담아줄 List 생성
-        List<String> excelHeaderNameList = new LinkedList<>();
-
-        // 클래스가 가진 필드의 정보를 전부 얻어온 뒤, 필드의 갯수만큼 반복문을 실행한다.
-        for(Field field : type.getDeclaredFields()) {
-
-            // 필드가 애너테이션을 가지고 있을 경우 실행한다.
-            if(field.isAnnotationPresent(ExcelColumn.class)) {
-                // @ExcelColumn의 정보를 가져온다.
-                ExcelColumn excelColumn = field.getAnnotation(ExcelColumn.class);
-
-                // @ExcelColumn 애너테이션을 사용해서 지정한 헤더의 이름을 List에 담아준다.
-                excelHeaderNameList.add(excelColumn.headerName());
-            }
-        }
+        // 스트림으로 엑셀 헤더 이름들을 리스트로 반환
+        // 1. 매개변수로 전달된 클래스의 필드들을 배열로 받아, 스트림을 생성
+        // 2. @ExcelColumn 애너테이션이 붙은 필드만 수집
+        // 3. @ExcelColumn 애너테이션이 붙은 필드에서 애너테이션의 값을 매핑
+        // 4. LinkedList로 반환
+        List<String> excelHeaderNameList =  Arrays.stream(type.getDeclaredFields())
+                .filter(s -> s.isAnnotationPresent(ExcelColumn.class))
+                .map(s -> s.getAnnotation(ExcelColumn.class).headerName())
+                .collect(Collectors.toCollection(LinkedList::new));
 
         // 헤더의 이름을 담은 List가 비어있을 경우, 헤더 이름이 지정되지 않은 것이므로, 예외를 발생시킨다.
         if(CollectionUtils.isEmpty(excelHeaderNameList)) {
